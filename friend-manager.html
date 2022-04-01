@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add a Friend - FRM</title>
+    <link rel="stylesheet" href="bulma/css/bulma.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+<nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-start">
+        <div class="navbar-item">
+            <div class="buttons">
+                <a href="you.html" class="button is-light">You</a>
+                <a href="your-friends.html" class="button is-light">Your Friends</a>
+                <a href="friend-manager.html" class="button is-primary">Friend Manager</a>
+            </div>
+        </div>
+    </div>
+    <div class="navbar-end">
+        <div class="navbar-item">
+            <div class="buttons">
+                <button onclick="logout()" class="button">Logout</button>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <section class="section">
+        <div class="card">
+            <div class="card-content">
+                <p class="title">
+                    Add a Friend
+                </p>
+                <div class="content">
+                    <div class="field">
+                        <label class="label">Name</label>
+                        <div class="control">
+                            <input class="input" type="text" id="add-name">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Bio</label>
+                        <div class="control">
+                            <textarea class="textarea" id="add-bio"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button onClick="addFriend()" class="button is-primary" id="add-button">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script>
+    const token = localStorage.getItem('token')
+    if (!token)
+        location.href = 'index.html'
+
+    const addButton = $('add-button')
+
+    function addFriend() {
+        addButton.addClass('is-loading')
+        const name = $('#add-name').val()
+        const bio = $('#add-bio').val()
+        $.post('add-friend.php', {
+            name: name,
+            bio: bio,
+            token: token
+        }, function () {
+        }, 'json')
+            .done(function (data) {
+                const status = data.status
+                if (status === 'success') {
+                    $('#add-name').val('')
+                    $('#add-bio').val('')
+                    addButton.removeClass('is-loading')
+                    alert('Friend added successfully!')
+                    location.reload()
+                } else if (status === 'error') {
+                    addButton.removeClass('is-loading')
+                    alert(data.errors)
+                } else {
+                    addButton.removeClass('is-loading')
+                    alert('Something Went Wrong')
+                }
+            })
+            .fail(function () {
+                addButton.removeClass('is-loading')
+                alert('Lost Internet Connection')
+            })
+    }
+
+    function logout() {
+        localStorage.removeItem('token')
+        location.href = 'index.html'
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Friends - FRM</title>
+    <link rel="stylesheet" href="bulma/css/bulma.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+<nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-start">
+        <div class="navbar-item">
+            <div class="buttons">
+                <a href="you.html" class="button is-light">You</a>
+                <a href="your-friends.html" class="button is-primary">Your Friends</a>
+                <a href="friend-manager.html" class="button is-light">Friend Manager</a>
+            </div>
+        </div>
+    </div>
+    <div class="navbar-end">
+        <div class="navbar-item">
+            <div class="buttons">
+                <button onclick="logout()" class="button">Logout</button>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <section class="section">
+        <div class="card">
+            <div class="card-content">
+                <p class="title">
+                    Post About Friends
+                </p>
+                <div class="content">
+                    <div class="field">
+                        <label class="label">Friend</label>
+                        <div class="select is-primary">
+                            <select id="friend-select">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" id="bio-field">
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">
+                                    Friend Bio
+                                </p>
+                            </header>
+                            <div class="card-content">
+                                <div class="content">
+                                    <span id="friend-bio"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Title</label>
+                        <div class="control">
+                            <input class="input" type="text" id="title">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Message</label>
+                        <div class="control">
+                            <textarea class="textarea" id="message"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button onClick="post()" class="button is-primary" id="post-button">Post</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <progress id="progress" class="progress is-small is-primary"></progress>
+        <div id="posts-view"></div>
+    </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script>
+    const progress = $('#progress')
+    const token = localStorage.getItem('token')
+    if (!token)
+        location.href = 'index.html'
+
+    const dateOptions = {
+        day: 'numeric',
+        month: 'long',
+        weekday: 'short',
+        hour: 'numeric',
+        minute: 'numeric',
+        timeZoneName: 'short'
+    }
+
+    const postButton = $('#post-button')
+    const postsView = $('#posts-view')
+
+    let friends = []
+
+    function getFriends() {
+        $.post('get-friends.php', {
+            token: token
+        }, function () {
+        }, 'json')
+            .done(function (data) {
+                console.log(data)
+                friends = data.friends
+                let html = ''
+                friends.forEach(function (value) {
+                    html += '<option value="' + value.id + '">' + value.name + '</option>'
+                })
+                $('#friend-select').html(html)
+                if (html) {
+                    const bio = friends[0]['bio']
+                    if (bio) {
+                        $('#friend-bio').text(bio)
+                        $('#bio-field').show()
+                    } else {
+                        $('#friend-bio').text('')
+                        $('#bio-field').hide()
+                    }
+                }
+            })
+            .fail(function () {
+                alert('Lost Internet Connection')
+            })
+    }
+
+    $('#friend-select').on('change', function () {
+        const value = parseInt(this.value)
+        const bio = friends.find(x => x.id === value).bio
+        if (bio) {
+            $('#friend-bio').text(bio)
+            $('#bio-field').show()
+        } else {
+            $('#friend-bio').text('')
+            $('#bio-field').hide()
+        }
+
+    })
+
+    getFriends()
+
+    function post() {
+        postButton.addClass('is-loading')
+        const friendId = parseInt($('#friend-select').val())
+        const title = $('#title').val()
+        const message = $('#message').val()
+        $.post('friend-post.php', {
+            title: title,
+            message: message,
+            token: token,
+            friendId: friendId
+        }, function () {
+        }, 'json')
+            .done(function (data) {
+                const status = data.status
+                if (status === 'success') {
+                    $('#title').val('')
+                    $('#message').val('')
+                    postButton.removeClass('is-loading')
+                    alert('Post added successfully!')
+                    location.reload()
+                } else if (status === 'error') {
+                    postButton.removeClass('is-loading')
+                    alert(data.errors)
+                } else {
+                    postButton.removeClass('is-loading')
+                    alert('Something Went Wrong')
+                }
+            })
+            .fail(function () {
+                postButton.removeClass('is-loading')
+                alert('Lost Internet Connection')
+            })
+    }
+
+    function getPosts() {
+        $.post('get-friend-posts.php', {
+            token: token
+        }, function () {
+        }, 'json')
+            .done(function (data) {
+                console.log(data)
+                // load posts here
+                const posts = data.posts
+                let html = ''
+                posts.forEach(function (value) {
+                    html +=
+                        '                <article class="message">\n' +
+                        '                    <div class="message-header">\n' +
+                        '                        <p>(' + value.friendName + ') ' + value.title + ' — ' + new Date(value.createdAtTimestamp * 1000).toLocaleString('en-US', dateOptions) + '</p>\n' +
+                        '                        <button class="delete" onClick="deletePost(' + value.id + ')" aria-label="delete"></button>\n' +
+                        '                    </div>\n' +
+                        '                    <div class="message-body">\n' +
+                        '                        ' + value.message + '\n' +
+                        '                    </div>\n' +
+                        '                </article>\n'
+                })
+                progress.hide()
+                postsView.html(html)
+            })
+            .fail(function () {
+                alert('Lost Internet Connection')
+            })
+    }
+
+    getPosts()
+
+    function deletePost(id) {
+        console.log(id)
+        alert('Coming soon!')
+    }
+
+    function logout() {
+        localStorage.removeItem('token')
+        location.href = 'index.html'
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - FRM</title>
+    <link rel="stylesheet" href="bulma/css/bulma.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+<section class="hero is-primary">
+    <div class="hero-body">
+        <p class="title">
+            Friend Relationship Manager (FRM)
+        </p>
+        <p class="subtitle">
+            Not a CRM but a FRM
+        </p>
+    </div>
+</section>
+<div class="container">
+    <section class="section">
+        <div class="card">
+            <div class="card-content">
+                <p class="title">
+                    Sign Up
+                </p>
+                <div class="content">
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control">
+                            <input class="input" type="text" id="sign-up-email">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Password</label>
+                        <div class="control">
+                            <input class="input" type="text" id="sign-up-password">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button onClick="signUp()" class="button is-primary" id="sign-up-button">Sign Up</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="card">
+            <div class="card-content">
+                <p class="title">
+                    Log In
+                </p>
+                <div class="content">
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control">
+                            <input class="input" type="text" id="log-in-email">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Password</label>
+                        <div class="control">
+                            <input class="input" type="text" id="log-in-password">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button onClick="logIn()" class="button is-primary" id="log-in-button">Log In</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script>
+    const signUpButton = $('#sign-up-button')
+    const logInButton = $('#log-in-button')
+
+    function signUp() {
+        signUpButton.addClass('is-loading')
+        const signUpEmail = $('#sign-up-email').val()
+        const signUpPassword = $('#sign-up-password').val()
+        $.post('sign-up.php', {
+            email: signUpEmail,
+            password: signUpPassword
+        }, function () {
+        }, 'json')
+            .done(function (data) {
+                const status = data.status
+                if (status === 'success') {
+                    localStorage.setItem('token', data.token)
+                    location.href = 'you.html'
+                } else if (status === 'error') {
+                    signUpButton.removeClass('is-loading')
+                    alert(data.errors)
+                } else {
+                    signUpButton.removeClass('is-loading')
+                    alert('Something Went Wrong')
+                }
+            })
+            .fail(function () {
+                signUpButton.removeClass('is-loading')
+                alert('Lost Internet Connection')
+            })
+    }
+
+    function logIn() {
+        logInButton.addClass('is-loading')
+        const logInEmail = $('#log-in-email').val()
+        const logInPassword = $('#log-in-password').val()
+        $.post('log-in.php', {
+            email: logInEmail,
+            password: logInPassword
+        }, function () {
+        }, 'json')
+            .done(function (data) {
+                const status = data.status
+                if (status === 'success') {
+                    localStorage.setItem('token', data.token)
+                    location.href = 'you.html'
+                } else if (status === 'error') {
+                    logInButton.removeClass('is-loading')
+                    alert(data.errors)
+                } else {
+                    logInButton.removeClass('is-loading')
+                    alert('Something Went Wrong')
+                }
+            })
+            .fail(function () {
+                logInButton.removeClass('is-loading')
+                alert('Lost Internet Connection')
+            })
+    }
+</script>
+</body>
+</html>
