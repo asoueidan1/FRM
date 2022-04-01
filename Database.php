@@ -30,7 +30,7 @@ class Database
         if ($this->local) {
             $this->config = [
                 'host' => 'localhost',
-                'database' => 'webdevproject',
+                'database' => 'localdbname',
                 'username' => 'root',
                 'password' => ''
             ];
